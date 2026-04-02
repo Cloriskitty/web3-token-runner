@@ -81,6 +81,7 @@ export function BulletGame({
   const [flash, setFlash] = useState<string | null>(null)
   const [shake, setShake] = useState(false)
   const [countdown, setCountdown] = useState(3) // 3-2-1 before game starts
+  const [bgmOn, setBgmOn] = useState(true) // BGM on by default (user can mute)
 
   useEffect(() => { setDisplayHealth(health) }, [health])
   useEffect(() => { setDisplayScore(score) }, [score])
@@ -413,6 +414,33 @@ export function BulletGame({
           </p>
         </div>
       </div>
+
+      {/* BGM: Heroes 2.0 — AudioMack embed */}
+      {countdown <= 0 && bgmOn && (
+        <iframe
+          key="heroes-bgm"
+          src="https://audiomack.com/embed/rj-pasin/song/heroes-20?autoplay=1&background=1"
+          style={{ display: "none", width: 0, height: 0, border: "none" }}
+          allow="autoplay"
+          title="game-bgm"
+        />
+      )}
+
+      {/* BGM toggle button */}
+      <button
+        onClick={() => setBgmOn(v => !v)}
+        className="absolute z-40 rounded-lg px-3 py-1 text-xs font-bold border-2 transition-all"
+        style={{
+          top: 52, right: 12,
+          fontFamily: "var(--font-pixel, monospace)",
+          borderColor: bgmOn ? "#ffe66d" : "#ffffff40",
+          color: bgmOn ? "#1a1a1a" : "#ffffff70",
+          background: bgmOn ? "#ffe66d" : "rgba(0,0,0,0.7)",
+          boxShadow: bgmOn ? "0 0 10px rgba(255,230,109,0.5)" : "none",
+        }}
+      >
+        {bgmOn ? "🎵 BGM" : "🔇 BGM"}
+      </button>
 
       <style dangerouslySetInnerHTML={{
         __html: `
