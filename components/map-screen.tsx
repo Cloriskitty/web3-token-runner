@@ -15,17 +15,7 @@ import {
 
 // ── Constants ────────────────────────────────────────────────────
 // Inline style — no external CDN dependency; map.on("load") fires immediately
-const MAP_STYLE: maplibregl.StyleSpecification = {
-  version: 8,
-  sources: {},
-  layers: [
-    {
-      id: "background",
-      type: "background",
-      paint: { "background-color": "#b8c9a0" }, // pixel-map green
-    },
-  ],
-}
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron"
 
 // Center between OKX SJ (-121.89, 37.33) and Coinbase SF (-122.39, 37.77)
 const MAP_CENTER: [number, number] = [-122.14, 37.56]
