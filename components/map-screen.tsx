@@ -252,7 +252,8 @@ export function MapScreen({
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       {/* Map */}
-      <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+      {/* Inline style beats MapLibre's .maplibregl-map { position:relative } CSS */}
+      <div ref={mapContainerRef} className="z-0" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }} />
 
       {/* Pixel grid overlay */}
       <div
