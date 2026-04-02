@@ -15,7 +15,7 @@ import {
 
 // ── Constants ────────────────────────────────────────────────────
 // Inline style — no external CDN dependency; map.on("load") fires immediately
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron"
+const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
 
 // Center between OKX SJ (-121.89, 37.33) and Coinbase SF (-122.39, 37.77)
 const MAP_CENTER: [number, number] = [-122.14, 37.56]
