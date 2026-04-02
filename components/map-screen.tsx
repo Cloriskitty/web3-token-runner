@@ -1,6 +1,8 @@
 // components/map-screen.tsx — SF Bay Area map for level selection
 "use client"
 
+import "maplibre-gl/dist/maplibre-gl.css" // ← required for MapLibre to render correctly
+
 import { useEffect, useRef, useState } from "react"
 import maplibregl from "maplibre-gl"
 import {
@@ -11,7 +13,7 @@ import {
   type Company,
 } from "@/lib/companies"
 
-// ── Constants ──────────────────────────────────────────────────
+// ── Constants ────────────────────────────────────────────────────
 // Inline style — no external CDN dependency; map.on("load") fires immediately
 const MAP_STYLE: maplibregl.StyleSpecification = {
   version: 8,
@@ -24,6 +26,7 @@ const MAP_STYLE: maplibregl.StyleSpecification = {
     },
   ],
 }
+
 // Center between OKX SJ (-121.89, 37.33) and Coinbase SF (-122.39, 37.77)
 const MAP_CENTER: [number, number] = [-122.14, 37.56]
 const MAP_ZOOM = 9.5
@@ -32,7 +35,7 @@ const MAP_ZOOM = 9.5
 const UNLOCKED_SLUGS = ["okx-sj", "coinbase"]
 const BOSS_SLUG = "coinbase"
 
-// ── Pixel map style (from map-runner) ─────────────────────────
+// ── Pixel map style (from map-runner) ─────────────────────────────
 function sp(map: maplibregl.Map, id: string, prop: string, val: unknown) {
   if (map.getLayer(id)) map.setPaintProperty(id, prop, val)
 }
@@ -45,11 +48,21 @@ function applyPixelStyle(map: maplibregl.Map) {
   sp(map, "water_shadow", "fill-color", "#325f97")
   sp(map, "waterway", "line-color", "#4479b1")
   const roadFills = [
-    "road_service_fill", "road_minor_fill", "road_pri_fill_ramp",
-    "road_trunk_fill_ramp", "road_sec_fill_noramp", "road_pri_fill_noramp",
+    "road_service_fill",
+    "road_minor_fill",
+    "road_pri_fill_ramp",
+    "road_trunk_fill_ramp",
+    "road_sec_fill_noramp",
+    "road_pri_fill_noramp",
   ]
   roadFills.forEach((id) => sp(map, id, "line-color", "#8f856a"))
-  const placeLabels = ["place_hamlet", "place_suburbs", "place_town", "place_city_r6", "place_city_r5"]
+  const placeLabels = [
+    "place_hamlet",
+    "place_suburbs",
+    "place_town",
+    "place_city_r6",
+    "place_city_r5",
+  ]
   placeLabels.forEach((id) => {
     sp(map, id, "text-color", "#3d2e1f")
     sp(map, id, "text-halo-color", "#d9cb97")
@@ -57,7 +70,7 @@ function applyPixelStyle(map: maplibregl.Map) {
   })
 }
 
-// ── Marker element builder ─────────────────────────────────────
+// ── Marker element builder ────────────────────────────────────────
 function buildMarkerEl(
   company: Company,
   state: "locked" | "unlocked" | "completed" | "selected"
@@ -78,8 +91,7 @@ function buildMarkerEl(
   const sz = isBoss ? 36 : state === "selected" ? 30 : 24
   const badge = document.createElement("div")
   badge.style.cssText = `
-    width:${sz}px; height:${sz}px;
-    border:2px solid #342414;
+    width:${sz}px; height:${sz}px; border:2px solid #342414;
     background:${state === "completed" ? "#22c55e" : isBoss ? "#f26522" : accent};
     display:flex; align-items:center; justify-content:center;
     padding:2px; box-sizing:border-box;
@@ -96,10 +108,9 @@ function buildMarkerEl(
     const inner = document.createElement("div")
     const innerSz = Math.max(8, sz - 8)
     inner.style.cssText = `
-      width:${innerSz}px; height:${innerSz}px;
-      background:#fffefc; border:1px solid #342414;
-      display:flex; align-items:center; justify-content:center;
-      box-sizing:border-box;
+      width:${innerSz}px; height:${innerSz}px; background:#fffefc;
+      border:1px solid #342414; display:flex; align-items:center;
+      justify-content:center; box-sizing:border-box;
     `
     const img = document.createElement("img")
     img.src = getCompanyLogoUrl(company)
@@ -135,7 +146,8 @@ function buildMarkerEl(
     label.textContent = isBoss ? `⚡ BOSS: ${company.name}` : company.name
     label.style.cssText = `
       margin-top:3px; padding:2px 6px;
-      background:rgba(0,0,0,0.8); color:${isBoss ? "#f97316" : "#fff"};
+      background:rgba(0,0,0,0.8);
+      color:${isBoss ? "#f97316" : "#fff"};
       font-size:9px; white-space:nowrap;
       border:1px solid ${isBoss ? "#f97316" : accent};
       font-family:var(--font-pixel, monospace);
@@ -146,14 +158,14 @@ function buildMarkerEl(
   return wrapper
 }
 
-// ── Props ──────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────────
 interface MapScreenProps {
   completedLevels: string[]
   totalScore: number
   onSelectCompany: (slug: string) => void
 }
 
-// ── Component ──────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────
 export function MapScreen({
   completedLevels,
   totalScore,
@@ -192,18 +204,18 @@ export function MapScreen({
       setBgmOn(false)
       return
     }
-
     if (bgmRef.current) {
-      // Already created before — just resume
       bgmRef.current.ctx.resume()
       setBgmOn(true)
       return
     }
-
     // First press: create everything fresh inside this click handler
-    const NOTES = [523,659,784,1047,784,659,523,440,523,659,784,880,784,659,523,392]
+    const NOTES = [
+      523, 659, 784, 1047, 784, 659, 523, 440, 523, 659, 784, 880, 784, 659,
+      523, 392,
+    ]
     const BEAT = 0.2
-    const ctx = new AudioContext()   // inside click → always "running"
+    const ctx = new AudioContext()
     const state = { ctx, timer: 0, noteIdx: 0, nextNote: ctx.currentTime + 0.05 }
     bgmRef.current = state
 
@@ -231,7 +243,7 @@ export function MapScreen({
     setBgmOn(true)
   }
 
-  // ── Init map ─────────────────────────────────────────────────
+  // ── Init map ───────────────────────────────────────────────────
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
 
@@ -247,14 +259,22 @@ export function MapScreen({
     })
 
     map.on("load", () => {
-      try { applyPixelStyle(map) } catch { /* decorative */ }
+      try {
+        applyPixelStyle(map)
+      } catch {
+        /* decorative */
+      }
       map.resize()
 
       // Add markers for ALL companies
       COMPANIES.forEach((company) => {
         const isUnlocked = UNLOCKED_SLUGS.includes(company.slug)
         const isCompleted = completedLevels.includes(company.slug)
-        const state = !isUnlocked ? "locked" : isCompleted ? "completed" : "unlocked"
+        const state = !isUnlocked
+          ? "locked"
+          : isCompleted
+            ? "completed"
+            : "unlocked"
 
         const el = document.createElement("div")
         el.appendChild(buildMarkerEl(company, state))
@@ -286,12 +306,13 @@ export function MapScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Re-render markers when selection changes ─────────────────
+  // ── Re-render markers when selection changes ───────────────────
   useEffect(() => {
     if (!mapReady) return
     COMPANIES.forEach((company) => {
       const marker = markersRef.current.get(company.slug)
       if (!marker) return
+
       const isUnlocked = UNLOCKED_SLUGS.includes(company.slug)
       const isCompleted = completedLevels.includes(company.slug)
       const isSelected = selected?.slug === company.slug
@@ -304,7 +325,6 @@ export function MapScreen({
 
       const el = marker.getElement()
       el.replaceChildren(buildMarkerEl(company, markerState))
-
       if (isUnlocked) {
         el.style.cursor = "pointer"
         el.addEventListener("click", () => setSelected(company))
@@ -312,7 +332,7 @@ export function MapScreen({
     })
   }, [selected, completedLevels, mapReady])
 
-  // ── Fly to selected company ───────────────────────────────────
+  // ── Fly to selected company ────────────────────────────────────
   useEffect(() => {
     if (!selected || !mapRef.current) return
     mapRef.current.flyTo({
@@ -324,13 +344,19 @@ export function MapScreen({
   }, [selected])
 
   const isBoss = selected?.slug === BOSS_SLUG
-  const isSelectedCompleted = selected ? completedLevels.includes(selected.slug) : false
+  const isSelectedCompleted = selected
+    ? completedLevels.includes(selected.slug)
+    : false
 
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       {/* Map */}
       {/* Inline style beats MapLibre's .maplibregl-map { position:relative } CSS */}
-      <div ref={mapContainerRef} className="z-0" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }} />
+      <div
+        ref={mapContainerRef}
+        className="z-0"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      />
 
       {/* Pixel grid overlay */}
       <div
@@ -343,19 +369,28 @@ export function MapScreen({
       />
 
       {/* Top HUD bar */}
-      <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-4 py-3"
-        style={{ background: "rgba(0,0,0,0.75)", borderBottom: "2px solid #ffe66d" }}
+      <div
+        className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-4 py-3"
+        style={{
+          background: "rgba(0,0,0,0.75)",
+          borderBottom: "2px solid #ffe66d",
+        }}
       >
         <div style={{ fontFamily: "var(--font-pixel, monospace)" }}>
           <span className="text-xs text-[#ffe66d]">WEB3 TOKEN RUNNER</span>
           <span className="ml-2 text-xs text-white/50">· OKX US AI Hackathon</span>
         </div>
-        <div className="flex items-center gap-4" style={{ fontFamily: "var(--font-pixel, monospace)" }}>
+        <div
+          className="flex items-center gap-4"
+          style={{ fontFamily: "var(--font-pixel, monospace)" }}
+        >
           <span className="text-xs text-white/70">
             ✅ {completedLevels.length}/2 cleared
           </span>
           {totalScore > 0 && (
-            <span className="text-sm text-[#ffe66d]">⭐ {totalScore.toLocaleString()}</span>
+            <span className="text-sm text-[#ffe66d]">
+              ⭐ {totalScore.toLocaleString()}
+            </span>
           )}
           <button
             onClick={toggleBGM}
@@ -381,8 +416,12 @@ export function MapScreen({
             className="inline-block rounded-lg border-2 border-[#ffe66d] bg-black/80 px-6 py-3"
             style={{ fontFamily: "var(--font-pixel, monospace)" }}
           >
-            <p className="text-sm text-[#ffe66d]">📍 Click OKX or Coinbase to select a level</p>
-            <p className="mt-1 text-xs text-white/50">🔒 Other companies = coming soon</p>
+            <p className="text-sm text-[#ffe66d]">
+              📍 Click OKX or Coinbase to select a level
+            </p>
+            <p className="mt-1 text-xs text-white/50">
+              🔒 Other companies = coming soon
+            </p>
           </div>
         </div>
       )}
@@ -406,10 +445,18 @@ export function MapScreen({
                     color: isBoss ? "#f97316" : "#ffe66d",
                   }}
                 >
-                  {isBoss ? "⚡ BOSS LEVEL" : isSelectedCompleted ? "✅ COMPLETED" : "📍 LEVEL 1"}
+                  {isBoss
+                    ? "⚡ BOSS LEVEL"
+                    : isSelectedCompleted
+                      ? "✅ COMPLETED"
+                      : "📍 LEVEL 1"}
                 </p>
-                <h2 className="mt-1 text-lg font-bold text-white">{selected.name}</h2>
-                <p className="mt-1 text-xs text-white/60">{selected.shortDescription}</p>
+                <h2 className="mt-1 text-lg font-bold text-white">
+                  {selected.name}
+                </h2>
+                <p className="mt-1 text-xs text-white/60">
+                  {selected.shortDescription}
+                </p>
               </div>
               <button
                 onClick={() => setSelected(null)}
@@ -418,7 +465,6 @@ export function MapScreen({
                 ✕
               </button>
             </div>
-
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => onSelectCompany(selected.slug)}
@@ -429,7 +475,11 @@ export function MapScreen({
                   color: isBoss ? "#fff" : "#1a1a2e",
                 }}
               >
-                {isBoss ? "⚔️ ENTER BOSS" : isSelectedCompleted ? "🔄 PLAY AGAIN" : "▶ ENTER LEVEL"}
+                {isBoss
+                  ? "⚔️ ENTER BOSS"
+                  : isSelectedCompleted
+                    ? "🔄 PLAY AGAIN"
+                    : "▶ ENTER LEVEL"}
               </button>
               <button
                 onClick={() => setSelected(null)}
@@ -443,15 +493,19 @@ export function MapScreen({
       )}
 
       {/* Float animation */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes float {
-            from { transform: translateY(0); }
-            to { transform: translateY(-6px); }
-          }
-          .maplibregl-canvas { image-rendering: pixelated; }
-        `
-      }} />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes float {
+              from { transform: translateY(0); }
+              to { transform: translateY(-6px); }
+            }
+            .maplibregl-canvas {
+              image-rendering: pixelated;
+            }
+          `,
+        }}
+      />
     </div>
   )
 }
