@@ -1,14 +1,13 @@
 export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
-export const pageTitle =
-  "SF Bay Web3 Quest: Explore Web3 & Crypto Companies in the Bay Area"
+export const pageTitle = "Web3 Token Runner | SF Bay Bullet-Dodge Game"
 
 export const pageDescription =
-  "Browse Web3 and crypto companies across the SF Bay Area on an interactive retro quest map, with pixel-art visuals, category filters, and direct company links."
+  "Dodge scam bullets, collect Web3 tokens, and battle your way across the SF Bay Area crypto map. Built for the OKX US AI-Native Hackathon."
 
 export const ogImage = {
   url: "/ogp-sf-ai-startup-map.png",
   width: 1367,
   height: 768,
-  alt: "SF Bay Web3 Quest pixel-art key visual",
+  alt: "Web3 Token Runner key visual",
 } as const

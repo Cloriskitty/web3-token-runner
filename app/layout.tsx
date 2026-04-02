@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     description: pageDescription,
     type: "website",
     url: siteUrl,
-    siteName: "SF Bay Web3 Quest",
+    siteName: "Web3 Token Runner",
     images: [ogImage],
   },
   twitter: {
