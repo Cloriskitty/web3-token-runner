@@ -12,7 +12,18 @@ import {
 } from "@/lib/companies"
 
 // ── Constants ──────────────────────────────────────────────────
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+// Inline style — no external CDN dependency; map.on("load") fires immediately
+const MAP_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {},
+  layers: [
+    {
+      id: "background",
+      type: "background",
+      paint: { "background-color": "#b8c9a0" }, // pixel-map green
+    },
+  ],
+}
 // Center between OKX SJ (-121.89, 37.33) and Coinbase SF (-122.39, 37.77)
 const MAP_CENTER: [number, number] = [-122.14, 37.56]
 const MAP_ZOOM = 9.5
@@ -153,6 +164,72 @@ export function MapScreen({
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const [selected, setSelected] = useState<Company | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const [bgmOn, setBgmOn] = useState(false)
+
+  // Single ref bundles all audio state — no race conditions
+  const bgmRef = useRef<{
+    ctx: AudioContext
+    timer: number
+    noteIdx: number
+    nextNote: number
+  } | null>(null)
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (bgmRef.current) {
+        window.clearTimeout(bgmRef.current.timer)
+        bgmRef.current.ctx.close()
+        bgmRef.current = null
+      }
+    }
+  }, [])
+
+  // ── BGM toggle — AudioContext created INSIDE onClick = browser never blocks ──
+  const toggleBGM = () => {
+    if (bgmOn) {
+      bgmRef.current?.ctx.suspend()
+      setBgmOn(false)
+      return
+    }
+
+    if (bgmRef.current) {
+      // Already created before — just resume
+      bgmRef.current.ctx.resume()
+      setBgmOn(true)
+      return
+    }
+
+    // First press: create everything fresh inside this click handler
+    const NOTES = [523,659,784,1047,784,659,523,440,523,659,784,880,784,659,523,392]
+    const BEAT = 0.2
+    const ctx = new AudioContext()   // inside click → always "running"
+    const state = { ctx, timer: 0, noteIdx: 0, nextNote: ctx.currentTime + 0.05 }
+    bgmRef.current = state
+
+    const tick = () => {
+      const s = bgmRef.current
+      if (!s || s.ctx.state === "closed") return
+      while (s.nextNote < s.ctx.currentTime + 0.2) {
+        const freq = NOTES[s.noteIdx % NOTES.length]
+        const osc = s.ctx.createOscillator()
+        const env = s.ctx.createGain()
+        osc.type = "square"
+        osc.frequency.value = freq
+        env.gain.setValueAtTime(0.09, s.nextNote)
+        env.gain.exponentialRampToValueAtTime(0.0001, s.nextNote + BEAT * 0.8)
+        osc.connect(env)
+        env.connect(s.ctx.destination)
+        osc.start(s.nextNote)
+        osc.stop(s.nextNote + BEAT)
+        s.nextNote += BEAT
+        s.noteIdx++
+      }
+      s.timer = window.setTimeout(tick, 25)
+    }
+    tick()
+    setBgmOn(true)
+  }
 
   // ── Init map ─────────────────────────────────────────────────
   useEffect(() => {
@@ -280,6 +357,20 @@ export function MapScreen({
           {totalScore > 0 && (
             <span className="text-sm text-[#ffe66d]">⭐ {totalScore.toLocaleString()}</span>
           )}
+          <button
+            onClick={toggleBGM}
+            className="rounded px-3 py-1 text-xs font-bold border-2 transition-all"
+            style={{
+              fontFamily: "var(--font-pixel, monospace)",
+              borderColor: bgmOn ? "#ffe66d" : "#ffffff50",
+              color: bgmOn ? "#1a1a1a" : "#ffffff80",
+              background: bgmOn ? "#ffe66d" : "rgba(255,255,255,0.08)",
+              boxShadow: bgmOn ? "0 0 10px rgba(255,230,109,0.5)" : "none",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {bgmOn ? "🎵 BGM" : "🔇 BGM"}
+          </button>
         </div>
       </div>
 
