@@ -48,7 +48,15 @@ function sp(
 }
 
 function addVoxelBuildings(map: MapLibreMap) {
-  if (!map.getSource("carto") || map.getLayer("minecraft-buildings")) return
+  if (map.getLayer("minecraft-buildings")) return
+
+  // Find the vector tile source (Carto styles use varying source names)
+  const sources = map.getStyle()?.sources ?? {}
+  const vectorSource = Object.keys(sources).find(
+    (k) => (sources[k] as { type: string }).type === "vector"
+  )
+  if (!vectorSource) return
+
   const rawH: ExpressionSpecification = [
     "coalesce",
     ["to-number", ["get", "render_height"]],
@@ -60,35 +68,47 @@ function addVoxelBuildings(map: MapLibreMap) {
     8,
     ["min", 180, ["*", ["round", ["/", rawH, 8]], 8]],
   ]
-  map.addLayer(
-    {
-      id: "minecraft-buildings",
-      type: "fill-extrusion",
-      source: "carto",
-      "source-layer": "building",
-      minzoom: 11,
-      paint: {
-        "fill-extrusion-color": [
-          "interpolate",
-          ["linear"],
-          snH,
-          8,
-          "#c9a87c",
-          32,
-          "#d4b88e",
-          72,
-          "#dfc8a2",
-          140,
-          "#ebd8b8",
-        ],
-        "fill-extrusion-height": snH,
-        "fill-extrusion-base": 0,
-        "fill-extrusion-opacity": 0.88,
-        "fill-extrusion-vertical-gradient": false,
+
+  // Find a suitable "before" layer, or omit if not found
+  const beforeLayer = map.getLayer("boundary_country_outline")
+    ? "boundary_country_outline"
+    : map.getLayer("boundary_country")
+      ? "boundary_country"
+      : undefined
+
+  try {
+    map.addLayer(
+      {
+        id: "minecraft-buildings",
+        type: "fill-extrusion",
+        source: vectorSource,
+        "source-layer": "building",
+        minzoom: 11,
+        paint: {
+          "fill-extrusion-color": [
+            "interpolate",
+            ["linear"],
+            snH,
+            8,
+            "#c9a87c",
+            32,
+            "#d4b88e",
+            72,
+            "#dfc8a2",
+            140,
+            "#ebd8b8",
+          ],
+          "fill-extrusion-height": snH,
+          "fill-extrusion-base": 0,
+          "fill-extrusion-opacity": 0.88,
+          "fill-extrusion-vertical-gradient": false,
+        },
       },
-    },
-    "boundary_country_outline"
-  )
+      beforeLayer
+    )
+  } catch {
+    // Silently ignore — buildings are decorative
+  }
 }
 
 function applyPixelStyle(map: MapLibreMap) {
@@ -328,6 +348,8 @@ export function MapRunner({
 }: MapRunnerProps) {
   // All companies including boss at the end
   const allStops = [...companies, boss]
+  const allStopsRef = useRef(allStops)
+  allStopsRef.current = allStops
 
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const gameOverlayRef = useRef<HTMLDivElement>(null)
@@ -410,8 +432,16 @@ export function MapRunner({
     })
 
     map.on("load", () => {
-      applyPixelStyle(map)
-      addVoxelBuildings(map)
+      try {
+        applyPixelStyle(map)
+      } catch (e) {
+        console.warn("applyPixelStyle error:", e)
+      }
+      try {
+        addVoxelBuildings(map)
+      } catch (e) {
+        console.warn("addVoxelBuildings error:", e)
+      }
       map.resize()
 
       // Add all company markers
@@ -427,9 +457,22 @@ export function MapRunner({
       setMapLoaded(true)
     })
 
+    map.on("error", (e) => {
+      console.warn("MapLibre error:", e.error?.message ?? e)
+    })
+
     mapRef.current = map
 
+    // Fallback: if map doesn't load within 5s, start game anyway
+    const fallbackTimer = setTimeout(() => {
+      if (!mapRef.current?.loaded()) {
+        console.warn("Map load timeout — starting game without full map")
+        setMapLoaded(true)
+      }
+    }, 5000)
+
     return () => {
+      clearTimeout(fallbackTimer)
       markersRef.current.forEach((m) => m.remove())
       markersRef.current.clear()
       map.remove()
@@ -506,7 +549,7 @@ export function MapRunner({
         const el = marker.getElement()
         el.replaceChildren(
           createSimpleMarker(
-            allStops.find((c) => c.slug === slug) ?? company,
+            allStopsRef.current.find((c) => c.slug === slug) ?? company,
             slug === company.slug
           )
         )
@@ -811,26 +854,20 @@ export function MapRunner({
       </div>
 
       {/* CSS animations */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .maplibregl-canvas {
           image-rendering: pixelated;
           image-rendering: crisp-edges;
         }
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes marker-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
-      `}</style>
+      ` }} />
     </div>
   )
 }
