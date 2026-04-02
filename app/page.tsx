@@ -1,17 +1,40 @@
 // app/page.tsx — NEW state machine: map → playing → result/victory → map
 "use client"
 
+import dynamic from "next/dynamic"
 import { useCallback, useReducer } from "react"
+
 import {
   createInitialState,
   gameReducer,
   type LevelResult,
 } from "@/lib/game-state"
 import { COMPANIES } from "@/lib/companies"
-import { MapScreen } from "@/components/map-screen"
 import { BulletGame } from "@/components/bullet-game"
 import { ResultScreen } from "@/components/result-screen"
 import { VictoryScreen } from "@/components/victory-screen"
+
+// ── Dynamic import prevents MapLibre from running on the server (SSR fix) ──
+const MapScreen = dynamic(
+  () => import("@/components/map-screen").then((m) => ({ default: m.MapScreen })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-dvh items-center justify-center bg-[#0a0a1a]">
+        <div
+          style={{
+            fontFamily: "monospace",
+            color: "#ffe66d",
+            fontSize: 14,
+            letterSpacing: "0.1em",
+          }}
+        >
+          Loading map…
+        </div>
+      </div>
+    ),
+  }
+)
 
 const BOSS_SLUG = "coinbase"
 
@@ -43,7 +66,7 @@ export default function Page() {
     []
   )
 
-  // ── Map: company selection ──────────────────────────────────
+  // ── Map: company selection ────────────────────────────────────
   if (state.phase === "map") {
     return (
       <MapScreen
@@ -54,7 +77,7 @@ export default function Page() {
     )
   }
 
-  // ── Playing: bullet game ────────────────────────────────────
+  // ── Playing: bullet game ──────────────────────────────────────
   if (state.phase === "playing" && state.currentCompanySlug) {
     const company = COMPANIES.find((c) => c.slug === state.currentCompanySlug)
     if (!company) return null
@@ -74,7 +97,7 @@ export default function Page() {
     )
   }
 
-  // ── Result: level over (not boss) ───────────────────────────
+  // ── Result: level over (not boss) ─────────────────────────────
   if (state.phase === "result") {
     const lastResult = state.levelResults[state.levelResults.length - 1]
     const companyName =
@@ -94,7 +117,7 @@ export default function Page() {
     )
   }
 
-  // ── Victory ─────────────────────────────────────────────────
+  // ── Victory ───────────────────────────────────────────────────
   if (state.phase === "victory") {
     return (
       <VictoryScreen
