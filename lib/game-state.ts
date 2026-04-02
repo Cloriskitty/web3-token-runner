@@ -1,14 +1,6 @@
-import type { RouteName } from "./routes"
+// lib/game-state.ts — SIMPLIFIED (no routes, starts at map)
 
-export type GamePhase =
-  | "route-select"
-  | "map"
-  | "playing"
-  | "result"
-  | "boss-intro"
-  | "boss-battle"
-  | "boss-result"
-  | "victory"
+export type GamePhase = "map" | "playing" | "result" | "victory"
 
 export interface LevelResult {
   companySlug: string
@@ -17,11 +9,11 @@ export interface LevelResult {
   bulletsHit: number
   maxCombo: number
   cleared: boolean
+  isBoss: boolean
 }
 
 export interface GameState {
   phase: GamePhase
-  route: RouteName | null
   currentCompanySlug: string | null
   health: number
   maxHealth: number
@@ -34,8 +26,7 @@ export interface GameState {
 
 export function createInitialState(): GameState {
   return {
-    phase: "route-select",
-    route: null,
+    phase: "map",
     currentCompanySlug: null,
     health: 5,
     maxHealth: 5,
@@ -48,39 +39,22 @@ export function createInitialState(): GameState {
 }
 
 export type GameAction =
-  | { type: "SELECT_ROUTE"; route: RouteName }
   | { type: "START_LEVEL"; companySlug: string }
   | { type: "COLLECT_TOKEN"; points: number }
   | { type: "HIT_BULLET" }
-  | { type: "BREAK_COMBO" }
   | { type: "END_LEVEL"; result: LevelResult }
-  | { type: "START_BOSS" }
-  | { type: "END_BOSS"; result: LevelResult }
-  | { type: "RESTART" }
   | { type: "BACK_TO_MAP" }
+  | { type: "RESTART" }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case "SELECT_ROUTE":
-      return {
-        ...state,
-        route: action.route,
-        phase: "map",
-        health: 5,
-        score: 0,
-        combo: 0,
-        maxCombo: 0,
-        completedLevels: [],
-        levelResults: [],
-      }
-
     case "START_LEVEL":
       return {
         ...state,
         phase: "playing",
         currentCompanySlug: action.companySlug,
         combo: 0,
-        health: Math.min(state.health + 1, state.maxHealth),
+        health: state.maxHealth, // refresh health each level
       }
 
     case "COLLECT_TOKEN": {
@@ -102,38 +76,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         combo: 0,
       }
 
-    case "BREAK_COMBO":
-      return { ...state, combo: 0 }
-
     case "END_LEVEL": {
-      const newCompleted = [
-        ...state.completedLevels,
-        action.result.companySlug,
-      ]
+      const newCompleted = action.result.cleared
+        ? [...new Set([...state.completedLevels, action.result.companySlug])]
+        : state.completedLevels
+      const isVictory = action.result.cleared && action.result.isBoss
       return {
         ...state,
-        phase: "result",
+        phase: isVictory ? "victory" : "result",
         completedLevels: newCompleted,
         levelResults: [...state.levelResults, action.result],
       }
     }
 
-    case "START_BOSS":
-      return {
-        ...state,
-        phase: "boss-intro",
-        combo: 0,
-      }
-
-    case "END_BOSS":
-      return {
-        ...state,
-        phase: action.result.cleared ? "victory" : "boss-result",
-        levelResults: [...state.levelResults, action.result],
-      }
-
     case "BACK_TO_MAP":
-      return { ...state, phase: "map", currentCompanySlug: null }
+      return {
+        ...state,
+        phase: "map",
+        currentCompanySlug: null,
+      }
 
     case "RESTART":
       return createInitialState()
