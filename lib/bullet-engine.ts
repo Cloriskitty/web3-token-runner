@@ -1,4 +1,4 @@
-export type BulletType = "token" | "scam"
+export type BulletType = "token" | "scam" | "rare"
 
 export interface Bullet {
   id: number
@@ -161,6 +161,18 @@ const COMPANY_TOKENS: Record<string, string[]> = {
   ],
 }
 
+// Gold rare bullet labels (universal Web3 wisdom)
+const RARE_LABELS = [
+  "Not your keys, not your coins",
+  "DYOR always",
+  "WAGMI",
+  "gm gm gm",
+  "Satoshi's vision",
+  "In code we trust",
+  "Decentralize everything",
+  "Diamond hands",
+]
+
 // Scam/wrong bullet labels
 const SCAM_LABELS = [
   "100x guaranteed",
@@ -188,11 +200,17 @@ export function createBullet(
   containerWidth: number,
   difficulty: number
 ): Bullet {
-  const isToken = Math.random() > 0.35 + difficulty * 0.05
+  const roll = Math.random()
+  const isRare = roll < 0.08 // 8% chance for gold rare
+  const isToken = !isRare && roll < 0.65 - difficulty * 0.05
+
   const tokens = COMPANY_TOKENS[companySlug] ?? COMPANY_TOKENS["coinbase"]
-  const label = isToken
-    ? tokens[Math.floor(Math.random() * tokens.length)]
-    : SCAM_LABELS[Math.floor(Math.random() * SCAM_LABELS.length)]
+  const type: BulletType = isRare ? "rare" : isToken ? "token" : "scam"
+  const label = isRare
+    ? RARE_LABELS[Math.floor(Math.random() * RARE_LABELS.length)]
+    : isToken
+      ? tokens[Math.floor(Math.random() * tokens.length)]
+      : SCAM_LABELS[Math.floor(Math.random() * SCAM_LABELS.length)]
 
   const width = Math.max(80, label.length * 9 + 20)
   const maxX = containerWidth - width - 10
@@ -202,8 +220,8 @@ export function createBullet(
     id: nextId++,
     x,
     y: -40,
-    speed: 1.5 + Math.random() * 1.5 + difficulty * 0.3,
-    type: isToken ? "token" : "scam",
+    speed: isRare ? 2.5 + Math.random() : 1.5 + Math.random() * 1.5 + difficulty * 0.3,
+    type,
     label,
     width,
     height: 32,
@@ -216,11 +234,17 @@ export function createBossBullet(
   containerWidth: number,
   wave: number
 ): Bullet {
-  const isToken = Math.random() > 0.5
+  const roll = Math.random()
+  const isRare = roll < 0.06
+  const isToken = !isRare && roll < 0.5
+
   const tokens = COMPANY_TOKENS[bossSlug] ?? COMPANY_TOKENS["coinbase"]
-  const label = isToken
-    ? tokens[Math.floor(Math.random() * tokens.length)]
-    : SCAM_LABELS[Math.floor(Math.random() * SCAM_LABELS.length)]
+  const type: BulletType = isRare ? "rare" : isToken ? "token" : "scam"
+  const label = isRare
+    ? RARE_LABELS[Math.floor(Math.random() * RARE_LABELS.length)]
+    : isToken
+      ? tokens[Math.floor(Math.random() * tokens.length)]
+      : SCAM_LABELS[Math.floor(Math.random() * SCAM_LABELS.length)]
 
   const width = Math.max(80, label.length * 9 + 20)
   const maxX = containerWidth - width - 10
@@ -230,8 +254,8 @@ export function createBossBullet(
     id: nextId++,
     x,
     y: -40,
-    speed: 2 + Math.random() * 2 + wave * 0.2,
-    type: isToken ? "token" : "scam",
+    speed: isRare ? 3.5 + Math.random() : 2 + Math.random() * 2 + wave * 0.2,
+    type,
     label,
     width,
     height: 32,

@@ -234,7 +234,11 @@ export function BulletRunner({
 
         // Collision check
         if (checkCollision(player, bullet)) {
-          if (bullet.type === "token") {
+          if (bullet.type === "rare") {
+            tokensCollectedRef.current++
+            onCollectToken(50) // 5x points for gold
+            triggerFlash("#ffe66d60")
+          } else if (bullet.type === "token") {
             tokensCollectedRef.current++
             onCollectToken(10)
             triggerFlash("#00ff8840")
@@ -306,28 +310,37 @@ export function BulletRunner({
       />
 
       {/* Bullets */}
-      {bullets.map((bullet) => (
-        <div
-          key={bullet.id}
-          className="absolute flex items-center justify-center rounded-md px-2 text-xs font-bold whitespace-nowrap"
-          style={{
-            left: bullet.x,
-            top: bullet.y,
-            width: bullet.width,
-            height: bullet.height,
-            backgroundColor:
-              bullet.type === "token" ? "#00ff8830" : "#ff475730",
-            border: `2px solid ${bullet.type === "token" ? "#00ff88" : "#ff4757"}`,
-            color: bullet.type === "token" ? "#00ff88" : "#ff4757",
-            transform: `rotate(${bullet.rotation}deg)`,
-            fontFamily: "var(--font-pixel)",
-            fontSize: "9px",
-          }}
-        >
-          {bullet.type === "token" ? "✓ " : "✗ "}
-          {bullet.label}
-        </div>
-      ))}
+      {bullets.map((bullet) => {
+        const colors = {
+          token: { bg: "#00ff8830", border: "#00ff88", text: "#00ff88", icon: "✓" },
+          scam: { bg: "#ff475730", border: "#ff4757", text: "#ff4757", icon: "✗" },
+          rare: { bg: "#ffe66d40", border: "#ffe66d", text: "#ffe66d", icon: "★" },
+        }
+        const c = colors[bullet.type]
+
+        return (
+          <div
+            key={bullet.id}
+            className="absolute flex items-center justify-center rounded-md px-2 text-xs font-bold whitespace-nowrap"
+            style={{
+              left: bullet.x,
+              top: bullet.y,
+              width: bullet.width,
+              height: bullet.height,
+              backgroundColor: c.bg,
+              border: `2px solid ${c.border}`,
+              color: c.text,
+              transform: `rotate(${bullet.rotation}deg)`,
+              fontFamily: "var(--font-pixel)",
+              fontSize: "9px",
+              boxShadow: bullet.type === "rare" ? `0 0 15px ${c.border}80` : "none",
+              animation: bullet.type === "rare" ? "pulse 0.5s infinite" : "none",
+            }}
+          >
+            {c.icon} {bullet.label}
+          </div>
+        )
+      })}
 
       {/* Player */}
       <div
