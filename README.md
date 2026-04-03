@@ -1,37 +1,6 @@
-# SF Bay Area Web3 Quest 🗺️⛓️
+# SF Web3 token runner 🗺️⛓️
 
-A Dragon Quest-style interactive map of Web3 and crypto companies across the San Francisco Bay Area — from the Financial District to Silicon Valley.
+Web3 Token Runner is a bullet comment parkour game based on the real Web3 company map of Silicon Valley. Players select companies to enter the level on the pixel-style map, and score points by avoiding incorrect information and collecting correct knowledge. It helps users understand the Web3 ecosystem through gamification and reduces the industry learning threshold.
 
-## 🏰 What's on the map
-
-17 companies spanning the full Bay Area Web3 ecosystem:
-
-- **Exchanges** — Coinbase, Kraken, OKX, Robinhood, CoinList
-- **Infrastructure** — Alchemy, Protocol Labs, Chainlink Labs, Solana Labs, Aptos Labs, Mysten Labs, Forte
-- **Custody** — Anchorage Digital, BitGo
-- **Payments** — Ripple
-- **Investor** — a16z Crypto
-
-## 🗾 Coverage
-
-- 📍 San Francisco (Financial District, SoMa, Mission Rock)
-- 📍 Palo Alto & Menlo Park
-- 📍 San Jose
-- 📍 South San Francisco
-
-## 🚀 Getting started
-
-```bash
-pnpm install
-pnpm dev
-```
-
-## 🤝 Add your company
-
-Know a Bay Area Web3 company that should be on the map? Open a PR and add it to `lib/companies.ts`.
-
-Each entry needs: name, address, coordinates, founded year, and a source URL for verification.
-
----
 
 *Inspired by [SF AI Startup Quest](https://github.com/taishikato/sf-ai-startup-quest) by @taishikato*
