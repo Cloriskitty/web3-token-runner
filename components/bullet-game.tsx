@@ -80,16 +80,16 @@ export function BulletGame({
   const [flash, setFlash] = useState<string | null>(null)
   const [shake, setShake] = useState(false)
   const [countdown, setCountdown] = useState(3)
-  const [On, setOn] = useState(true)
+  const [bgmOn, setBgmOn] = useState(true)
 
   useEffect(() => { setDisplayHealth(health) }, [health])
   useEffect(() => { setDisplayScore(score) }, [score])
   useEffect(() => { setDisplayCombo(combo) }, [combo])
 
   // ── BGM: start muted on mount, unmute when countdown ends ─────
-const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-useEffect(() => {
+  useEffect(() => {
   const audio = new Audio(getBgmSrc(company.slug))
   audio.loop = true
   audio.preload = "auto"
@@ -115,7 +115,7 @@ useEffect(() => {
 }, [company.slug])
 
 // ── 合并 Effect B + C：用 countdown 和 bgmOn 共同决定 muted 状态 ──
-useEffect(() => {
+  useEffect(() => {
   const audio = audioRef.current
   if (!audio) return
   // countdown > 0 时保持静音；倒计时结束后跟随 bgmOn
