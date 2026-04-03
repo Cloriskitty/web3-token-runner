@@ -80,46 +80,47 @@ export function BulletGame({
   const [flash, setFlash] = useState<string | null>(null)
   const [shake, setShake] = useState(false)
   const [countdown, setCountdown] = useState(3)
-  const [bgmOn, setBgmOn] = useState(true)
+  const [On, setOn] = useState(true)
 
   useEffect(() => { setDisplayHealth(health) }, [health])
   useEffect(() => { setDisplayScore(score) }, [score])
   useEffect(() => { setDisplayCombo(combo) }, [combo])
 
   // ── BGM: start muted on mount, unmute when countdown ends ─────
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  useEffect(() => {
-    const audio = new Audio(getBgmSrc(company.slug))
-    audio.loop = true
-    audio.preload = "auto"
-    audio.volume = 0.5
-    audio.muted = true // muted autoplay always works; unmute after countdown
-    audioRef.current = audio
-    audio.play().catch(() => {})
+useEffect(() => {
+  const audio = new Audio(getBgmSrc(company.slug))
+  audio.loop = true
+  audio.preload = "auto"
+  audio.volume = 0.5
+  audio.muted = true // 静音启动，绕过 autoplay policy
+  audioRef.current = audio
 
-    return () => {
-      audio.pause()
-      audioRef.current = null
+  audio.play().catch(() => {
+    // play() 被 block 时，等用户有任何操作再触发
+    const unlock = () => {
+      audioRef.current?.play().catch(() => {})
+      document.removeEventListener("click", unlock)
+      document.removeEventListener("keydown", unlock)
     }
-  }, [company.slug])
+    document.addEventListener("click", unlock, { once: true })
+    document.addEventListener("keydown", unlock, { once: true })
+  })
 
-  // Unmute when countdown reaches 0 (if bgmOn)
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (countdown <= 0 && bgmOn) {
-      audio.muted = false
-    }
-  }, [countdown, bgmOn])
+  return () => {
+    audio.pause()
+    audioRef.current = null
+  }
+}, [company.slug])
 
-  // Sync mute when user toggles button
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    audio.muted = !bgmOn
-  }, [bgmOn])
-
+// ── 合并 Effect B + C：用 countdown 和 bgmOn 共同决定 muted 状态 ──
+useEffect(() => {
+  const audio = audioRef.current
+  if (!audio) return
+  // countdown > 0 时保持静音；倒计时结束后跟随 bgmOn
+  audio.muted = countdown > 0 || !bgmOn
+}, [countdown, bgmOn])
   const triggerFlash = useCallback((color: string) => {
     setFlash(color); setTimeout(() => setFlash(null), 150)
   }, [])
