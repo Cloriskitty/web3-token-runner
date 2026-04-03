@@ -420,7 +420,16 @@ export function BulletGame({
         <iframe
           key="heroes-bgm"
           src="https://audiomack.com/embed/rj-pasin/song/heroes-20?autoplay=1&background=1"
-          style={{ display: "none", width: 0, height: 0, border: "none" }}
+          style={{ 
+            position:"fixed",
+            top:0,
+            left:0,
+            width:"1px",
+            height:"1px",
+            opacity:0,
+            pointerEvents:"none",
+            border:"none",
+          }}
           allow="autoplay"
           title="game-bgm"
         />
